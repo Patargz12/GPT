@@ -1,7 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/app/components/shared/navbar";
 import {
   useChat,
@@ -10,24 +8,8 @@ import {
   TypingIndicator,
   ChatInput,
 } from "@/app/features/chat";
-// ChatHistorySidebar removed
-import { useAuthStore } from "@/lib/stores/auth-store";
 
 export default function ChatPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const chatroomId = searchParams.get("chatroom_id");
-  const { isAuthenticated } = useAuthStore();
-
-  // Sidebar state removed
-
-  // Redirect to new URL structure if chatroom_id is present
-  useEffect(() => {
-    if (chatroomId) {
-      router.replace(`/chat/${chatroomId}`);
-    }
-  }, [chatroomId, router]);
-
   const {
     message,
     messages,
@@ -43,14 +25,10 @@ export default function ChatPage() {
     loadChatroomMessages,
   } = useChat();
 
-  // Chatroom select, new chat, and sidebar collapse handlers removed
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col">
       {/* Navigation */}
       <Navbar />
-
-      {/* Chat history sidebar removed */}
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col pt-16">

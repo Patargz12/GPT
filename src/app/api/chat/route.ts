@@ -2,15 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import {
-    saveMessagePair,
-    generateMessagePairId,
-    generateChatroomTitle,
-    createChatroom,
-    getChatroom,
-    initializeChatroomCollections
-} from '@/lib/chatroom-service';
-import jwt from 'jsonwebtoken';
+import { generateMessagePairId } from '@/lib/chatroom-service';
 
 // Error types for better error handling
 
@@ -71,25 +63,10 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const { message, chatroomId, isLocal } = body;
-        console.log('📝 Processing message:', message.substring(0, 50) + '...', 'Chatroom:', chatroomId, 'Local:', isLocal);
+        const { message } = body;
+        console.log('📝 Processing message:', message.substring(0, 50) + '...');
 
-        // Check if user is authenticated
-        const authHeader = request.headers.get('authorization');
-        const token = authHeader?.replace('Bearer ', '');
-        let isAuthenticated = false;
-        let userId = null;
-
-        if (token) {
-            try {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as unknown;
-                isAuthenticated = true;
-                userId = decoded.userId;
-                console.log('✅ Authenticated user:', userId);
-            } catch (error) {
-                console.log('❌ Invalid token, treating as unauthenticated');
-            }
-        }
+        // Authentication and chatroom logic removed for stateless chat
 
         // Note: Duplicate detection removed to prevent false positives
         // The frontend already has proper duplicate prevention with isSending state
@@ -206,56 +183,12 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Handle authenticated vs unauthenticated users
-        if (isAuthenticated && !isLocal) {
-            // Authenticated user - save to database
-            await initializeChatroomCollections();
-
-            let currentChatroomId = chatroomId;
-            let chatroom = null;
-
-            if (currentChatroomId) {
-                chatroom = await getChatroom(currentChatroomId);
-            }
-
-            if (!chatroom) {
-                const chatroomTitle = await generateChatroomTitle(message);
-                chatroom = await createChatroom(chatroomTitle);
-                currentChatroomId = chatroom.chatroom_id;
-            }
-
-            const messagePairId = generateMessagePairId();
-            await saveMessagePair(currentChatroomId, message, text);
-
-            console.log('✅ Authenticated user - saved to database:', {
-                chatroomId: currentChatroomId,
-                messagePairId,
-                userId
-            });
-
-            return NextResponse.json({
-                response: text,
-                chatroomId: currentChatroomId,
-                messagePairId,
-                isAuthenticated: true
-            });
-        } else {
-            // Unauthenticated user - return response for local storage
-            const messagePairId = generateMessagePairId();
-
-            console.log('✅ Unauthenticated user - returning for local storage:', {
-                chatroomId: chatroomId || 'new',
-                messagePairId
-            });
-
-            return NextResponse.json({
-                response: text,
-                chatroomId: chatroomId || null,
-                messagePairId,
-                isAuthenticated: false,
-                isLocal: true
-            });
-        }
+        // Stateless chat: just return the response and a messagePairId
+        const messagePairId = generateMessagePairId();
+        return NextResponse.json({
+            response: text,
+            messagePairId
+        });
 
     } catch (error: unknown) {
         console.error('Error in chat API:', error);

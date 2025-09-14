@@ -1,11 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
-import {
-    getSessionMessages,
-    getChatSession,
-    updateSessionTitle,
-    initializeChatCollections
-} from '@/lib/chat-history-service';
+import { NextResponse } from 'next/server';
 
-// GET /api/chat-history/[sessionId] - Get messages for a specific session
+export async function GET() {
+    return NextResponse.json({
+        error: 'Chat history functionality has been removed.'
+    }, { status: 501 });
+}
 
-// PUT /api/chat-history/[sessionId] - Update session (e.g., title)
+export async function PUT() {
+    return NextResponse.json({
+        error: 'Chat history functionality has been removed.'
+    }, { status: 501 });
+}
