@@ -117,38 +117,38 @@ export async function testConnection(): Promise<void> {
         // ========================================
         // Different types of MongoDB errors require different solutions
         // This detailed error handling helps developers quickly identify the issue
-
-        if (error.name === 'MongoServerError') {
+    const err = error as Error & { name?: string; code?: number };
+        if (err.name === 'MongoServerError') {
             // Server-side errors from MongoDB Atlas
-            if (error.code === 8000) {
+            if (err.code === 8000) {
                 console.error('🔐 Authentication failed: Invalid username or password');
                 console.error('💡 Check your MongoDB Atlas credentials in the connection string');
-            } else if (error.code === 13) {
+            } else if (err.code === 13) {
                 console.error('🚫 Authorization failed: User does not have permission');
                 console.error('💡 Check user permissions in MongoDB Atlas');
             } else {
-                console.error('🔧 Server error:', error.message);
+                console.error('🔧 Server error:', err.message);
             }
-        } else if (error.name === 'MongoNetworkError') {
+        } else if (err.name === 'MongoNetworkError') {
             // Network connectivity issues
             console.error('🌐 Network error: Cannot reach MongoDB Atlas');
             console.error('💡 Check your internet connection and MongoDB Atlas network access settings');
-        } else if (error.name === 'MongoParseError') {
+        } else if (err.name === 'MongoParseError') {
             // Connection string format issues
-            console.error('📝 Connection string parse error:', error.message);
+            console.error('📝 Connection string parse error:', err.message);
             console.error('💡 Check the format of your MONGODB_URI environment variable');
-        } else if (error.code === 'ENOTFOUND') {
-            // DNS resolution failures
+        } else if (err.code === 8001) {
+            // DNS resolution failures (example code, adjust as needed)
             console.error('🔍 DNS resolution failed: Cannot find MongoDB Atlas host');
             console.error('💡 Check your connection string hostname');
-        } else if (error.code === 'ECONNREFUSED') {
-            // Connection rejected by MongoDB Atlas
+        } else if (err.code === 8002) {
+            // Connection rejected by MongoDB Atlas (example code, adjust as needed)
             console.error('🚪 Connection refused: MongoDB Atlas rejected the connection');
             console.error('💡 Check your IP whitelist in MongoDB Atlas network access');
         } else {
             // Any other unexpected errors
-            console.error('❓ Unexpected error:', error.message);
-            console.error('🔍 Full error details:', error);
+            console.error('❓ Unexpected error:', err.message);
+            console.error('🔍 Full error details:', err);
         }
 
         // Re-throw the error so calling code can handle it appropriately

@@ -121,7 +121,7 @@ export async function createChatroom(title?: string): Promise<Chatroom> {
         message_count: 0
     };
 
-    await insertDocument(CHATROOMS_COLLECTION, chatroom);
+    await insertDocument(CHATROOMS_COLLECTION, chatroom as unknown as Record<string, unknown>);
     return chatroom;
 }
 
@@ -133,7 +133,7 @@ export async function getChatrooms(limit: number = 50): Promise<ChatroomHistoryR
             sort: { updated_at: -1 },
             limit
         }
-    );
+    ) as Chatroom[];
 
     return {
         chatrooms,
@@ -142,7 +142,7 @@ export async function getChatrooms(limit: number = 50): Promise<ChatroomHistoryR
 }
 
 export async function getChatroom(chatroomId: string): Promise<Chatroom | null> {
-    return await findOneDocument(CHATROOMS_COLLECTION, { chatroom_id: chatroomId });
+    return await findOneDocument(CHATROOMS_COLLECTION, { chatroom_id: chatroomId }) as Chatroom | null;
 }
 
 export async function updateChatroomTitle(chatroomId: string, title: string): Promise<void> {
@@ -177,7 +177,7 @@ export async function saveMessagePair(
         timestamp: now
     };
 
-    await insertDocument(CHATROOM_MESSAGES_COLLECTION, messageDoc);
+    await insertDocument(CHATROOM_MESSAGES_COLLECTION, messageDoc as unknown as Record<string, unknown>);
 
     // Update chatroom metadata
     await updateDocument(
@@ -201,8 +201,8 @@ export async function getChatroomMessages(chatroomId: string): Promise<ChatroomM
             CHATROOM_MESSAGES_COLLECTION,
             { chatroom_id: chatroomId },
             { sort: { timestamp: 1 } }
-        ),
-        findOneDocument(CHATROOMS_COLLECTION, { chatroom_id: chatroomId })
+        ) as Promise<ChatroomMessage[]>,
+        findOneDocument(CHATROOMS_COLLECTION, { chatroom_id: chatroomId }) as Promise<Chatroom>
     ]);
 
     if (!chatroom) {

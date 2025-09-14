@@ -8,7 +8,7 @@ export type {
 } from './chat-history';
 
 // API Error Types
-export type { APIErrorResponse } from './api-error';
+// export type { APIErrorResponse } from './api-error';
 
 // Chat Message Types
-export type { ChatMessage } from './chat-message';
+// export type { ChatMessage } from './chat-message';

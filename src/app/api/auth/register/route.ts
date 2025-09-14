@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
         // Connect to MongoDB
         const client = await clientPromise;
         const db = client.db('dotagpt');
-    const users = db.collection('users');
+        const users = db.collection('users');
 
         // Check if user already exists
         const existingUser = await users.findOne({

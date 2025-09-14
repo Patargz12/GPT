@@ -121,9 +121,11 @@ export async function countDocuments(
     return await collection.countDocuments(filter);
 }
 
+import type { IndexSpecification } from 'mongodb';
+
 export async function createIndex(
     collectionName: string,
-    indexSpec: Record<string, unknown>,
+    indexSpec: IndexSpecification,
     options?: CreateIndexesOptions
 ): Promise<string> {
     const db = await getDatabase();
