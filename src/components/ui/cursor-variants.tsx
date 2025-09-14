@@ -79,7 +79,6 @@ export const DireCursor = () => (
   <SmoothCursor
     size={26}
     color="#c23c2a"
-    springConfig={{ damping: 18, stiffness: 380, mass: 0.9 }}
     showTrail={true}
     trailLength={6}
     glowEffect={true}

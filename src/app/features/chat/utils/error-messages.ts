@@ -55,6 +55,9 @@ export const getErrorMessage = (errorData: APIErrorResponse): string => {
         case "TEXT_EXTRACTION_ERROR":
             return "📄 Could not process the AI response. Please try again.";
 
+        case "DUPLICATE_REQUEST":
+            return "⚡ Please wait a moment before sending another message.";
+
         case "INTERNAL_ERROR":
         default:
             return `❌ ${errorData.details ||

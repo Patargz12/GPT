@@ -1,43 +1,33 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 
-interface User {
+export interface User {
     id: string;
     username: string;
     email: string;
+    createdAt: string;
 }
 
 interface AuthState {
     user: User | null;
+    isAuthenticated: boolean;
     token: string | null;
-    loading: boolean;
-    error: string | null;
-}
-
-interface AuthActions {
     login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-    register: (username: string, email: string, password: string, confirmPassword: string) => Promise<{ success: boolean; error?: string }>;
+    register: (username: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
     logout: () => void;
-    clearError: () => void;
-    setLoading: (loading: boolean) => void;
-    initializeAuth: () => void;
+    setUser: (user: User) => void;
+    setToken: (token: string) => void;
 }
 
-type AuthStore = AuthState & AuthActions;
-
-export const useAuthStore = create<AuthStore>()(
+// MongoDB-backed auth store with JWT tokens
+export const useAuthStore = create<AuthState>()(
     persist(
         (set, get) => ({
-            // Initial state
             user: null,
+            isAuthenticated: false,
             token: null,
-            loading: false,
-            error: null,
 
-            // Actions
             login: async (email: string, password: string) => {
-                set({ loading: true, error: null });
-
                 try {
                     const response = await fetch('/api/auth/login', {
                         method: 'POST',
@@ -49,98 +39,93 @@ export const useAuthStore = create<AuthStore>()(
 
                     const data = await response.json();
 
-                    if (response.ok) {
+                    if (data.success) {
+                        // Store token in localStorage
+                        localStorage.setItem('dota-gpt-token', data.token);
+
                         set({
                             user: data.user,
-                            token: data.token,
-                            loading: false,
-                            error: null,
+                            isAuthenticated: true,
+                            token: data.token
                         });
+
                         return { success: true };
                     } else {
-                        set({ loading: false, error: data.error });
                         return { success: false, error: data.error };
                     }
                 } catch (error) {
-                    const errorMessage = 'Network error. Please try again.';
-                    set({ loading: false, error: errorMessage });
-                    return { success: false, error: errorMessage };
+                    console.error('Login error:', error);
+                    return { success: false, error: 'Login failed. Please try again.' };
                 }
             },
 
-            register: async (username: string, email: string, password: string, confirmPassword: string) => {
-                set({ loading: true, error: null });
-
+            register: async (username: string, email: string, password: string) => {
                 try {
                     const response = await fetch('/api/auth/register', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({ username, email, password, confirmPassword }),
+                        body: JSON.stringify({ username, email, password }),
                     });
 
                     const data = await response.json();
 
-                    if (response.ok) {
+                    if (data.success) {
+                        // Store token in localStorage
+                        localStorage.setItem('dota-gpt-token', data.token);
+
                         set({
                             user: data.user,
-                            token: data.token,
-                            loading: false,
-                            error: null,
+                            isAuthenticated: true,
+                            token: data.token
                         });
+
                         return { success: true };
                     } else {
-                        set({ loading: false, error: data.error });
                         return { success: false, error: data.error };
                     }
                 } catch (error) {
-                    const errorMessage = 'Network error. Please try again.';
-                    set({ loading: false, error: errorMessage });
-                    return { success: false, error: errorMessage };
+                    console.error('Registration error:', error);
+                    return { success: false, error: 'Registration failed. Please try again.' };
                 }
             },
 
             logout: () => {
-                set({
-                    user: null,
-                    token: null,
-                    error: null,
-                });
+                // Remove token from localStorage
+                localStorage.removeItem('dota-gpt-token');
+                set({ user: null, isAuthenticated: false, token: null });
             },
 
-            clearError: () => {
-                set({ error: null });
+            setUser: (user: User) => {
+                set({ user, isAuthenticated: true });
             },
 
-            setLoading: (loading: boolean) => {
-                set({ loading });
-            },
-
-            initializeAuth: () => {
-                // This will be called on app startup to restore auth state from localStorage
-                // The persist middleware handles this automatically, but we can use this for additional logic
-                const state = get();
-                if (state.token && state.user) {
-                    // Optionally validate token here or refresh user data
-                    console.log('Auth state restored from localStorage');
-                }
+            setToken: (token: string) => {
+                localStorage.setItem('dota-gpt-token', token);
+                set({ token });
             },
         }),
         {
-            name: 'dotagpt-auth', // localStorage key
-            storage: createJSONStorage(() => localStorage),
+            name: 'dota-gpt-auth',
             partialize: (state) => ({
                 user: state.user,
-                token: state.token,
-            }), // Only persist user and token, not loading/error states
+                isAuthenticated: state.isAuthenticated,
+                token: state.token
+            }),
+            onRehydrateStorage: () => (state) => {
+                // Restore token from localStorage on app load
+                if (state && typeof window !== 'undefined') {
+                    const token = localStorage.getItem('dota-gpt-token');
+                    if (token && !state.token) {
+                        state.token = token;
+                    }
+                }
+            },
         }
     )
 );
 
-// Selectors for better performance (optional but recommended)
+// Convenience hooks
 export const useUser = () => useAuthStore((state) => state.user);
-export const useToken = () => useAuthStore((state) => state.token);
-export const useAuthLoading = () => useAuthStore((state) => state.loading);
-export const useAuthError = () => useAuthStore((state) => state.error);
-export const useIsAuthenticated = () => useAuthStore((state) => !!state.user && !!state.token);
+export const useIsAuthenticated = () => useAuthStore((state) => state.isAuthenticated);

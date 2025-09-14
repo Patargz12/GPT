@@ -1,119 +1,107 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import User from '@/lib/models/User';
-import { hashPassword, generateToken, validateEmail, validatePassword, validateUsername } from '@/lib/auth';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import clientPromise from '@/lib/mongodb';
 
 export async function POST(request: NextRequest) {
     try {
-        const { username, email, password, confirmPassword } = await request.json();
+        const { username, email, password } = await request.json();
 
         // Validation
-        if (!username || !email || !password || !confirmPassword) {
+        if (!username || !email || !password) {
             return NextResponse.json(
-                { error: 'All fields are required' },
+                { success: false, error: 'All fields are required' },
                 { status: 400 }
             );
         }
 
-        if (password !== confirmPassword) {
+        if (password.length < 6) {
             return NextResponse.json(
-                { error: 'Passwords do not match' },
+                { success: false, error: 'Password must be at least 6 characters' },
                 { status: 400 }
             );
         }
 
-        // Validate email format
-        if (!validateEmail(email)) {
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
             return NextResponse.json(
-                { error: 'Please enter a valid email address' },
+                { success: false, error: 'Please enter a valid email address' },
                 { status: 400 }
             );
         }
 
-        // Validate password strength
-        const passwordValidation = validatePassword(password);
-        if (!passwordValidation.isValid) {
-            return NextResponse.json(
-                { error: passwordValidation.message },
-                { status: 400 }
-            );
-        }
-
-        // Validate username
-        const usernameValidation = validateUsername(username);
-        if (!usernameValidation.isValid) {
-            return NextResponse.json(
-                { error: usernameValidation.message },
-                { status: 400 }
-            );
-        }
-
-        // Connect to database
-        await connectDB();
+        // Connect to MongoDB
+        const client = await clientPromise;
+        const db = client.db('dotagpt');
+        const users = db.collecwtion('users');
 
         // Check if user already exists
-        const existingUser = await User.findOne({
+        const existingUser = await users.findOne({
             $or: [{ email }, { username }]
         });
 
         if (existingUser) {
-            if (existingUser.email === email) {
-                return NextResponse.json(
-                    { error: 'User with this email already exists' },
-                    { status: 409 }
-                );
-            }
-            if (existingUser.username === username) {
-                return NextResponse.json(
-                    { error: 'Username is already taken' },
-                    { status: 409 }
-                );
-            }
+            const field = existingUser.email === email ? 'email' : 'username';
+            return NextResponse.json(
+                { success: false, error: `User with this ${field} already exists` },
+                { status: 409 }
+            );
         }
 
         // Hash password
-        const hashedPassword = await hashPassword(password);
+        const saltRounds = 12;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        // Create new user
-        const newUser = new User({
+        // Create user
+        const newUser = {
             username,
             email,
             password: hashedPassword,
-        });
+            createdAt: new Date(),
+        };
 
-        await newUser.save();
+        const result = await users.insertOne(newUser);
 
         // Generate JWT token
-        const token = generateToken(newUser._id.toString());
-
-        // Return success response (don't include password)
-        return NextResponse.json(
+        const token = jwt.sign(
             {
-                message: 'User registered successfully',
-                user: {
-                    id: newUser._id,
-                    username: newUser.username,
-                    email: newUser.email,
-                },
-                token,
+                userId: result.insertedId.toString(),
+                email,
+                username
             },
-            { status: 201 }
+            process.env.JWT_SECRET!,
+            { expiresIn: '7d' }
         );
+
+        // Return user data without password
+        const userResponse = {
+            id: result.insertedId.toString(),
+            username,
+            email,
+            createdAt: newUser.createdAt.toISOString(),
+        };
+
+        return NextResponse.json({
+            success: true,
+            user: userResponse,
+            token,
+            message: 'Account created successfully'
+        });
 
     } catch (error: any) {
         console.error('Registration error:', error);
 
-        // Handle MongoDB validation errors
-        if (error.name === 'ValidationError') {
-            const messages = Object.values(error.errors).map((err: any) => err.message);
+        // Handle MongoDB errors
+        if (error.code === 11000) {
             return NextResponse.json(
-                { error: messages[0] },
-                { status: 400 }
+                { success: false, error: 'User already exists' },
+                { status: 409 }
             );
         }
 
         return NextResponse.json(
-            { error: 'Internal server error' },
+            { success: false, error: 'Registration failed. Please try again.' },
             { status: 500 }
         );
     }

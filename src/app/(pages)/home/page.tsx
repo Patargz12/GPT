@@ -11,10 +11,55 @@ import {
   BookOpen,
   Star,
 } from "lucide-react";
+import Image from "next/image";
 
 // Components
 import Navbar from "@/app/components/shared/navbar";
 import Footer from "@/app/components/shared/footer";
+import dynamic from "next/dynamic";
+
+// MacbookScrollDemo integration from sample_scroll_ui
+import { MacbookScroll } from "@/app/components/home/macbook/ui/macbook-scroll";
+
+const Badge = ({ className }: { className?: string }) => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 56 56"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path
+      d="M56 28C56 43.464 43.464 56 28 56C12.536 56 0 43.464 0 28C0 12.536 12.536 0 28 0C43.464 0 56 12.536 56 28Z"
+      fill="#00AA45"
+    ></path>
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M28 54C42.3594 54 54 42.3594 54 28C54 13.6406 42.3594 2 28 2C13.6406 2 2 13.6406 2 28C2 42.3594 13.6406 54 28 54ZM28 56C43.464 56 56 43.464 56 28C56 12.536 43.464 0 28 0C12.536 0 0 12.536 0 28C0 43.464 12.536 56 28 56Z"
+      fill="#219653"
+    ></path>
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M27.0769 12H15V46H24.3846V38.8889H27.0769C34.7305 38.8889 41 32.9048 41 25.4444C41 17.984 34.7305 12 27.0769 12ZM24.3846 29.7778V21.1111H27.0769C29.6194 21.1111 31.6154 23.0864 31.6154 25.4444C31.6154 27.8024 29.6194 29.7778 27.0769 29.7778H24.3846Z"
+      fill="#24292E"
+    ></path>
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M18 11H29.0769C36.2141 11 42 16.5716 42 23.4444C42 30.3173 36.2141 35.8889 29.0769 35.8889H25.3846V43H18V11ZM25.3846 28.7778H29.0769C32.1357 28.7778 34.6154 26.39 34.6154 23.4444C34.6154 20.4989 32.1357 18.1111 29.0769 18.1111H25.3846V28.7778Z"
+      fill="white"
+    ></path>
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M17 10H29.0769C36.7305 10 43 15.984 43 23.4444C43 30.9048 36.7305 36.8889 29.0769 36.8889H26.3846V44H17V10ZM19 12V42H24.3846V34.8889H29.0769C35.6978 34.8889 41 29.7298 41 23.4444C41 17.1591 35.6978 12 29.0769 12H19ZM24.3846 17.1111H29.0769C32.6521 17.1111 35.6154 19.9114 35.6154 23.4444C35.6154 26.9775 32.6521 29.7778 29.0769 29.7778H24.3846V17.1111ZM26.3846 19.1111V27.7778H29.0769C31.6194 27.7778 33.6154 25.8024 33.6154 23.4444C33.6154 21.0864 31.6194 19.1111 29.0769 19.1111H26.3846Z"
+      fill="#24292E"
+    ></path>
+  </svg>
+);
 
 // Magic UI Components
 import { TextAnimate } from "@/components/ui/text-animate";
@@ -38,6 +83,19 @@ export default function Home() {
       {/* Navigation */}
       <Navbar />
 
+      {/* New Hero Section: MacbookScrollDemo (from sample_scroll_ui) */}
+      <div className="w-full overflow-hidden bg-[#161e2b] relative z-20">
+        <MacbookScroll
+          badge={
+            <a href="https://peerlist.io/manuarora">
+              <Badge className="h-10 w-10 -rotate-12 transform" />
+            </a>
+          }
+          src={"/linear.webp"}
+          showGradient={false}
+        />
+      </div>
+
       {/* Background Effects */}
       <Particles
         className="absolute inset-0 z-0"
@@ -47,42 +105,29 @@ export default function Home() {
         refresh
       />
 
-      {/* Header Section */}
+      {/* Old Hero Section moved below MacbookScrollDemo */}
       <header className="relative z-10 pt-32 pb-32">
         <div className="container mx-auto px-6 text-center">
           {/* Animated Badge */}
           <div className="mb-8 flex justify-center">
             <div className="group rounded-full border border-white/10 bg-white/5 text-base text-white transition-all ease-in hover:cursor-pointer hover:bg-white/10">
               <AnimatedShinyText className="inline-flex items-center justify-center px-4 py-1 transition ease-out hover:text-neutral-600 hover:duration-300 hover:dark:text-neutral-400">
-                <span>✨ Master Dota 2 Positions</span>
+                <span>✨ Master Dota 2 Gameplay</span>
                 <ChevronRight className="ml-1 size-3 transition-transform duration-300 ease-in-out group-hover:translate-x-0.5" />
               </AnimatedShinyText>
             </div>
           </div>
 
-          {/* Main Title */}
-          <div className="mb-8 flex justify-center mt-8">
-            <TextAnimate
-              animation="blurInUp"
-              by="word"
-              className="text-6xl md:text-8xl font-bold mb-4"
-              once
-            >
-              DOTA
-            </TextAnimate>
-            <motion.div
-              initial={{ opacity: 0, filter: "blur(10px)", y: 20 }}
-              animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
-              transition={{
-                duration: 0.8,
-                delay: 0.3,
-                ease: "easeOut",
-              }}
-            >
-              <AnimatedGradientText className="text-6xl md:text-8xl font-bold">
-                GPT
-              </AnimatedGradientText>
-            </motion.div>
+          {/* Main Title (Logo Image) */}
+          <div className="mb-8 flex justify-center">
+            <Image
+              src="/dotagpt_logo.png"
+              alt="DotaGPT Logo"
+              width={700}
+              height={360}
+              className="w-auto object-contain drop-shadow-lg"
+              style={{ filter: "drop-shadow(0 4px 24px rgba(255,0,0,0.3))" }}
+            />
           </div>
 
           {/* Subtitle */}
@@ -112,24 +157,24 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             <div className="text-center">
               <NumberTicker
-                value={5}
+                value={500}
                 className="text-4xl font-bold text-red-500"
               />
-              <p className="text-gray-400 mt-2">Positions to Master</p>
+              <p className="text-gray-400 mt-2">Current Users</p>
             </div>
             <div className="text-center">
               <NumberTicker
                 value={1000}
                 className="text-4xl font-bold text-red-500"
               />
-              <p className="text-gray-400 mt-2">+ Tips & Strategies</p>
+              <p className="text-gray-400 mt-2">Tips & Strategies</p>
             </div>
             <div className="text-center">
               <NumberTicker
-                value={24}
+                value={3}
                 className="text-4xl font-bold text-red-500"
               />
-              <p className="text-gray-400 mt-2">/ 7 AI Support</p>
+              <p className="text-gray-400 mt-2">AI Support</p>
             </div>
           </div>
         </div>

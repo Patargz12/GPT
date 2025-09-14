@@ -77,11 +77,11 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/about"
+                  href="/news"
                   className="text-gray-400 hover:text-red-500 transition-colors flex items-center space-x-2"
                 >
                   <BookOpen className="w-4 h-4" />
-                  <span>About</span>
+                  <span>News</span>
                 </Link>
               </li>
             </ul>

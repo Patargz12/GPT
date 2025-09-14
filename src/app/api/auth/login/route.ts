@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import User from '@/lib/models/User';
-import { verifyPassword, generateToken, validateEmail } from '@/lib/auth';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import clientPromise from '@/lib/mongodb';
 
 export async function POST(request: NextRequest) {
     try {
@@ -10,63 +10,67 @@ export async function POST(request: NextRequest) {
         // Validation
         if (!email || !password) {
             return NextResponse.json(
-                { error: 'Email and password are required' },
+                { success: false, error: 'Email and password are required' },
                 { status: 400 }
             );
         }
 
-        // Validate email format
-        if (!validateEmail(email)) {
-            return NextResponse.json(
-                { error: 'Please enter a valid email address' },
-                { status: 400 }
-            );
-        }
-
-        // Connect to database
-        await connectDB();
+        // Connect to MongoDB
+        const client = await clientPromise;
+        const db = client.db('dotagpt');
+        const users = db.collection('users');
 
         // Find user by email
-        const user = await User.findOne({ email });
+        const user = await users.findOne({ email });
 
         if (!user) {
             return NextResponse.json(
-                { error: 'Invalid email or password' },
+                { success: false, error: 'Invalid email or password' },
                 { status: 401 }
             );
         }
 
         // Verify password
-        const isPasswordValid = await verifyPassword(password, user.password);
+        const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (!isPasswordValid) {
             return NextResponse.json(
-                { error: 'Invalid email or password' },
+                { success: false, error: 'Invalid email or password' },
                 { status: 401 }
             );
         }
 
         // Generate JWT token
-        const token = generateToken(user._id.toString());
-
-        // Return success response (don't include password)
-        return NextResponse.json(
+        const token = jwt.sign(
             {
-                message: 'Login successful',
-                user: {
-                    id: user._id,
-                    username: user.username,
-                    email: user.email,
-                },
-                token,
+                userId: user._id.toString(),
+                email: user.email,
+                username: user.username
             },
-            { status: 200 }
+            process.env.JWT_SECRET!,
+            { expiresIn: '7d' }
         );
+
+        // Return user data without password
+        const userResponse = {
+            id: user._id.toString(),
+            username: user.username,
+            email: user.email,
+            createdAt: user.createdAt.toISOString(),
+        };
+
+        return NextResponse.json({
+            success: true,
+            user: userResponse,
+            token,
+            message: 'Login successful'
+        });
 
     } catch (error: any) {
         console.error('Login error:', error);
+
         return NextResponse.json(
-            { error: 'Internal server error' },
+            { success: false, error: 'Login failed. Please try again.' },
             { status: 500 }
         );
     }

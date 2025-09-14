@@ -1,105 +1,90 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import LoginForm from "@/app/components/auth/login-form";
 import RegisterForm from "@/app/components/auth/register-form";
+import { useIsAuthenticated } from "@/lib/stores/auth-store";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
+  const isAuthenticated = useIsAuthenticated();
+  const router = useRouter();
 
-  // Debug useEffect to track state changes
+  // Redirect if already authenticated
   useEffect(() => {
-    console.log(`🔄 State changed: isLogin = ${isLogin}`);
-    console.log(`📋 Should render: ${isLogin ? "LoginForm" : "RegisterForm"}`);
-  }, [isLogin]);
+    if (isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, router]);
 
-  // Debug function to test clicking
-  const handleToggle = (loginState: boolean) => {
-    console.log(
-      `🖱️ Button clicked! Previous: ${isLogin}, Target: ${loginState}`
-    );
-    console.log(`🔄 Switching to ${loginState ? "Login" : "Register"} mode`);
-    setIsLogin(loginState);
-    console.log(`✅ setIsLogin called with: ${loginState}`);
-  };
+  if (isAuthenticated) {
+    return null; // Don't render anything while redirecting
+  }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4 py-8">
-      {/* Custom Auth Container */}
-      <div className="relative w-full max-w-sm sm:max-w-md md:max-w-lg">
-        {/* Background Effects */}
-        <div className="absolute inset-0 bg-gradient-to-br from-red-500/20 via-red-600/10 to-transparent rounded-2xl blur-xl" />
-        <div className="absolute inset-0 bg-gradient-to-tl from-gray-800/30 to-gray-700/20 rounded-2xl" />
-
-        {/* Main Container */}
-        <div className="relative bg-gray-800/80 backdrop-blur-md border border-gray-700/50 rounded-2xl shadow-2xl p-8 md:p-12">
-          <div className="w-full space-y-8">
-            {/* Header */}
-            <div className="text-center">
-              <div className="text-4xl font-bold mb-3">
-                <span className="text-white">DOTA</span>
-                <span className="text-red-500">GPT</span>
-              </div>
-              <p className="text-gray-400 text-lg">
-                {isLogin ? "Welcome back, hero!" : "Join the battlefield"}
-              </p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-red-900/20 flex items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bg-gray-800/50 backdrop-blur-md border border-gray-700/50 rounded-2xl p-8 shadow-2xl"
+        >
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="text-3xl font-bold mb-2">
+              <span className="text-white">DOTA</span>
+              <span className="text-red-500">GPT</span>
             </div>
-
-            {/* Toggle Buttons */}
-            <div className="flex bg-gray-700/50 rounded-xl p-1.5 border border-gray-600/30">
-              <button
-                onClick={() => {
-                  console.log("🖱️ LOGIN button clicked!");
-                  handleToggle(true);
-                }}
-                onMouseDown={() => console.log("🖱️ LOGIN button mouse down")}
-                className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all duration-200 cursor-pointer ${
-                  isLogin
-                    ? "bg-red-500 text-white shadow-lg shadow-red-500/25"
-                    : "text-gray-400 hover:text-white hover:bg-gray-600/30"
-                }`}
-                type="button"
-              >
-                Login
-              </button>
-              <button
-                onClick={() => {
-                  console.log("🖱️ REGISTER button clicked!");
-                  handleToggle(false);
-                }}
-                onMouseDown={() => console.log("🖱️ REGISTER button mouse down")}
-                className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all duration-200 cursor-pointer ${
-                  !isLogin
-                    ? "bg-red-500 text-white shadow-lg shadow-red-500/25"
-                    : "text-gray-400 hover:text-white hover:bg-gray-600/30"
-                }`}
-                type="button"
-              >
-                Register
-              </button>
-            </div>
-
-            {/* Debug Info - Very Visible */}
-            <div className="text-center p-4 bg-yellow-500/20 border border-yellow-500/50 rounded-lg">
-              <div className="text-yellow-400 font-bold text-lg">
-                🐛 DEBUG MODE
-              </div>
-              <div className="text-yellow-300 text-sm mt-1">
-                Current state:{" "}
-                <span className="font-mono font-bold">
-                  {isLogin ? "LOGIN" : "REGISTER"}
-                </span>
-              </div>
-              <div className="text-yellow-300 text-xs mt-1">
-                Form showing: {isLogin ? "LoginForm" : "RegisterForm"}
-              </div>
-            </div>
-
-            {/* Forms */}
-            <div className="mt-8">
-              {isLogin ? <LoginForm /> : <RegisterForm />}
-            </div>
+            <p className="text-gray-400 text-lg">
+              {isLogin ? "Welcome back, hero!" : "Join the battlefield"}
+            </p>
           </div>
+
+          {/* Toggle Buttons */}
+          <div className="flex bg-gray-700/50 rounded-lg p-1 mb-8">
+            <button
+              onClick={() => setIsLogin(true)}
+              className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all duration-200 ${
+                isLogin
+                  ? "bg-red-500 text-white shadow-lg shadow-red-500/25"
+                  : "text-gray-400 hover:text-white hover:bg-gray-600/30"
+              }`}
+              type="button"
+            >
+              Login
+            </button>
+            <button
+              onClick={() => setIsLogin(false)}
+              className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all duration-200 ${
+                !isLogin
+                  ? "bg-red-500 text-white shadow-lg shadow-red-500/25"
+                  : "text-gray-400 hover:text-white hover:bg-gray-600/30"
+              }`}
+              type="button"
+            >
+              Register
+            </button>
+          </div>
+
+          {/* Forms */}
+          <motion.div
+            key={isLogin ? "login" : "register"}
+            initial={{ opacity: 0, x: isLogin ? -20 : 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {isLogin ? <LoginForm /> : <RegisterForm />}
+          </motion.div>
+        </motion.div>
+
+        {/* Footer */}
+        <div className="text-center mt-6">
+          <p className="text-gray-500 text-sm">
+            By continuing, you agree to our Terms of Service and Privacy Policy
+          </p>
         </div>
       </div>
     </div>

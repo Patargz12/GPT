@@ -2,6 +2,15 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import {
+    saveMessagePair,
+    generateMessagePairId,
+    generateChatroomTitle,
+    createChatroom,
+    getChatroom,
+    initializeChatroomCollections
+} from '@/lib/chatroom-service';
+import jwt from 'jsonwebtoken';
 
 // Error types for better error handling
 
@@ -22,20 +31,18 @@ try {
     const promptPath = path.join(process.cwd(), 'src', 'app', 'api', 'chat', 'prompt.md');
     const promptContent = fs.readFileSync(promptPath, 'utf-8');
 
-    // Extract the system prompt section from the markdown
-    const systemPromptMatch = promptContent.match(/## System Prompt\n\n([\s\S]*?)(?=\n## |$)/);
-    if (systemPromptMatch) {
-        systemPrompt = systemPromptMatch[1].trim();
-    } else {
-        throw new Error('System prompt section not found in prompt.md');
-    }
+    // Use the entire prompt file as the system prompt
+    systemPrompt = promptContent;
 } catch (error) {
     console.error('Failed to load system prompt:', error);
     // Fallback to a basic prompt if file reading fails
     systemPrompt = 'You are DotaGPT, a helpful Dota 2 assistant. Provide accurate and helpful information about Dota 2 gameplay, heroes, items, and strategies.';
 }
 
+// Note: Duplicate request detection removed - handled by frontend isSending state
+
 export async function POST(request: NextRequest) {
+    console.log('🚀 Chat API called at:', new Date().toISOString());
     try {
         // Check if Gemini AI is properly initialized
         if (!genAI) {
@@ -64,7 +71,28 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const { message } = body;
+        const { message, chatroomId, isLocal } = body;
+        console.log('📝 Processing message:', message.substring(0, 50) + '...', 'Chatroom:', chatroomId, 'Local:', isLocal);
+
+        // Check if user is authenticated
+        const authHeader = request.headers.get('authorization');
+        const token = authHeader?.replace('Bearer ', '');
+        let isAuthenticated = false;
+        let userId = null;
+
+        if (token) {
+            try {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as unknown;
+                isAuthenticated = true;
+                userId = decoded.userId;
+                console.log('✅ Authenticated user:', userId);
+            } catch (error) {
+                console.log('❌ Invalid token, treating as unauthenticated');
+            }
+        }
+
+        // Note: Duplicate detection removed to prevent false positives
+        // The frontend already has proper duplicate prevention with isSending state
 
         // Validate message input
         if (!message || typeof message !== 'string') {
@@ -178,7 +206,56 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        return NextResponse.json({ response: text });
+        // Handle authenticated vs unauthenticated users
+        if (isAuthenticated && !isLocal) {
+            // Authenticated user - save to database
+            await initializeChatroomCollections();
+
+            let currentChatroomId = chatroomId;
+            let chatroom = null;
+
+            if (currentChatroomId) {
+                chatroom = await getChatroom(currentChatroomId);
+            }
+
+            if (!chatroom) {
+                const chatroomTitle = await generateChatroomTitle(message);
+                chatroom = await createChatroom(chatroomTitle);
+                currentChatroomId = chatroom.chatroom_id;
+            }
+
+            const messagePairId = generateMessagePairId();
+            await saveMessagePair(currentChatroomId, message, text);
+
+            console.log('✅ Authenticated user - saved to database:', {
+                chatroomId: currentChatroomId,
+                messagePairId,
+                userId
+            });
+
+            return NextResponse.json({
+                response: text,
+                chatroomId: currentChatroomId,
+                messagePairId,
+                isAuthenticated: true
+            });
+        } else {
+            // Unauthenticated user - return response for local storage
+            const messagePairId = generateMessagePairId();
+
+            console.log('✅ Unauthenticated user - returning for local storage:', {
+                chatroomId: chatroomId || 'new',
+                messagePairId
+            });
+
+            return NextResponse.json({
+                response: text,
+                chatroomId: chatroomId || null,
+                messagePairId,
+                isAuthenticated: false,
+                isLocal: true
+            });
+        }
 
     } catch (error: unknown) {
         console.error('Error in chat API:', error);

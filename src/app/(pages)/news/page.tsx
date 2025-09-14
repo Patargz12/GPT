@@ -97,7 +97,7 @@ export default function NewsPage() {
 
           {/* News Grid */}
           {news.length > 0 ? (
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {news.map((newsItem) => (
                 <NewsCard key={newsItem.gid} newsItem={newsItem} />
               ))}

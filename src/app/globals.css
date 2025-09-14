@@ -1,7 +1,15 @@
+@import url("https://fonts.googleapis.com/css2?family=New+Rocker&display=swap");
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+
+.new-rocker-regular {
+  font-family: var(--font-new-rocker), system-ui;
+  font-weight: 400;
+  font-style: normal;
+}
 
 @theme inline {
   --color-background: var(--background);
@@ -190,4 +198,26 @@
 
 .cursor-trail {
   animation: trail-fade 0.6s ease-out forwards;
+}
+
+/* Line clamp utilities */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }

@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { newRocker } from "./fonts";
 import "./globals.css";
 import { DireCursor } from "@/components/ui/cursor-variants";
 import AuthInitializer from "@/app/components/auth/auth-initializer";
+import DatabaseInitializer from "@/app/components/database/db-initializer";
+import "@/lib/db-startup-test"; // Initialize database connection on server startup
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,10 +31,12 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}
+        className={`${geistSans.variable} ${geistMono.variable} ${newRocker.variable} antialiased dark`}
       >
         <DireCursor />
-        <AuthInitializer>{children}</AuthInitializer>
+        <DatabaseInitializer>
+          <AuthInitializer>{children}</AuthInitializer>
+        </DatabaseInitializer>
       </body>
     </html>
   );

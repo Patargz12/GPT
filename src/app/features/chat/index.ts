@@ -15,3 +15,4 @@ export { ChatSuggestions } from "./components/chat-suggestions";
 export { ChatMessage as ChatMessageComponent } from "./components/chat-message";
 export { TypingIndicator } from "./components/typing-indicator";
 export { ChatInput } from "./components/chat-input";
+export { default as ChatHistorySidebar } from "./components/chat-history-sidebar";
