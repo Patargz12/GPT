@@ -21,6 +21,7 @@ export const useChat = (initialChatroomId?: string) => {
     const [isSending, setIsSending] = useState(false); // Prevent double sends
     const [activeRequestId, setActiveRequestId] = useState<string | null>(null); // Track active request (for UI)
     const activeRequestIdRef = useRef<string | null>(null); // For async logic
+    const isSendingRef = useRef(false); // Additional ref-based protection
 
     // Refs for scrolling functionality
     const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -403,15 +404,10 @@ export const useChat = (initialChatroomId?: string) => {
         console.log('📊 Current state - isSending:', isSending);
         console.log('📊 Current messages:', messages.map(m => ({ id: m.id, isUser: m.isUser, content: m.content })));
 
-        if (!message.trim() || isLoading || isSending) {
+        if (!message.trim() || isLoading || isSending || isSendingRef.current) {
             console.log('⛔ Prevented double send or empty message.');
             return;
         }
-        console.log('🚀 handleSendMessage called');
-        console.log('📊 Current state - message:', message.trim());
-        console.log('📊 Current state - isLoading:', isLoading);
-        console.log('📊 Current state - isSending:', isSending);
-        console.log('📊 Current messages:', messages.map(m => ({ id: m.id, isUser: m.isUser, content: m.content })));
 
         console.log('✅ Conditions met, proceeding with send');
 
@@ -423,6 +419,7 @@ export const useChat = (initialChatroomId?: string) => {
         activeRequestIdRef.current = requestId;
         setIsLoading(true);
         setIsSending(true);
+        isSendingRef.current = true;
 
         // Add user message, but first remove any temp user messages with the same content
         const tempId = `temp_${Date.now()}`;
@@ -474,6 +471,7 @@ export const useChat = (initialChatroomId?: string) => {
         } finally {
             setIsLoading(false);
             setIsSending(false);
+            isSendingRef.current = false;
             // Only clear if this is still the active request
             if (activeRequestIdRef.current === requestId) {
                 setActiveRequestId(null);
@@ -483,10 +481,13 @@ export const useChat = (initialChatroomId?: string) => {
     }, [message, isLoading, isSending, retryCount, sendMessageWithRetry, setMessagesWithDedup]);
 
     const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-        if (e.key === "Enter") {
-            handleSendMessage();
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            if (!isLoading && !isSending && !isSendingRef.current) {
+                handleSendMessage();
+            }
         }
-    }, [handleSendMessage]);
+    }, [handleSendMessage, isLoading, isSending]);
 
     const handleSuggestionClick = useCallback((suggestion: string) => {
         setMessage(suggestion);

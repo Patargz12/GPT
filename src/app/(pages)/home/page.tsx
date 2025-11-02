@@ -85,6 +85,14 @@ export default function Home() {
 
       {/* New Hero Section: MacbookScrollDemo (from sample_scroll_ui) */}
       <div className="w-full overflow-hidden bg-[#161e2b] relative z-20">
+        <Meteors 
+          number={35}
+          minDelay={0.1}
+          maxDelay={0.6}
+          minDuration={1.5}
+          maxDuration={5}
+          className="opacity-70"
+        />
         <MacbookScroll
           badge={
             <a href="https://peerlist.io/manuarora">

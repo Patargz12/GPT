@@ -122,8 +122,9 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        // Get the generative model (using Gemini 1.5 Flash - more stable than experimental)
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        // Get the generative model (using Gemini 2.5 Flash per project update)
+        // NOTE: ensure your GEMINI API key / project has access to this model.
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
         // Use the system prompt loaded from prompt.md
         const fullPrompt = `${systemPrompt}\n\nUser question: ${message}`;

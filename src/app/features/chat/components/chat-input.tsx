@@ -79,8 +79,8 @@ export const ChatInput = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Prevent double send by disabling submit while isSubmitting or isLoading
-  const handleSubmit = useCallback(() => {
+  // Handle button click - delegate to parent with local UI feedback
+  const handleButtonClick = useCallback(() => {
     if (message.trim() && !isLoading && !isSubmitting) {
       setIsSubmitting(true);
       onSendMessage();
@@ -97,18 +97,10 @@ export const ChatInput = ({
 
   const handleKeyDownInternal = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        // Only submit if not submitting or loading
-        if (!isSubmitting && !isLoading) {
-          e.preventDefault();
-          handleSubmit();
-        } else {
-          e.preventDefault();
-        }
-      }
+      // Let the parent hook handle the Enter key logic
       onKeyDown(e);
     },
-    [handleSubmit, onKeyDown, isSubmitting, isLoading]
+    [onKeyDown]
   );
 
   return (
@@ -131,7 +123,7 @@ export const ChatInput = ({
             />
             <button
               type="button"
-              onClick={handleSubmit}
+              onClick={handleButtonClick}
               disabled={!message.trim() || isLoading || isSubmitting}
               className={cn(
                 "ml-2 mr-4 rounded-full p-2 transition-colors",
